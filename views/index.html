@@ -1,0 +1,155 @@
+<html>
+	<head>
+		<title>excel-file-parser</title>
+		<meta charset="utf-8">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.7.7/xlsx.core.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.7.12/xlsx.full.min.js"></script>
+    
+    
+    
+    
+    <link rel="stylesheet" href="/style.css">
+    
+    
+	</head>
+
+	<body>
+    <script>
+       function handleFile(e) {
+         //Get the files from Upload control
+            const files = e.target.files;
+            let i, f;
+         //Loop through files
+            for (i = 0, f = files[i]; i != files.length; ++i) {
+                const reader = new FileReader();
+                const name = f.name;
+                reader.onload = function (e) {
+                    let data = e.target.result;
+
+                    let result;
+                    const workbook = XLSX.read(data, { type: 'binary' });
+
+                    let sheet_name_list = workbook.SheetNames;
+                    sheet_name_list.forEach(function (y) { /* iterate through sheets */
+                        //Convert the cell value to Json
+                        let roa = XLSX.utils.sheet_to_json(workbook.Sheets[y]);
+                        if (roa.length > 0) {
+                            result = roa;
+                        }
+                    });
+                  
+                   //Get the first column first cell value
+                    let sum1 = 0;
+                    let sum2 = 0;
+                    let arg_first = Object.keys(result[0])[0];
+                    let arg_second = Object.keys(result[0])[1];
+                    for(let i = 0; i < result.length; i++) {
+                       sum1 += +result[i][arg_first];
+                       sum2 += +result[i][arg_second];
+                    }
+                  console.log(sum1);
+                  console.log(sum2);
+                  
+                  
+                  let loadData = [{"FromFirst": sum1,"FromSecond": sum2}];
+                  
+                   JSONToCSVConvertor(loadData, "Vehicle Report", true);
+                  
+                  
+                  function JSONToCSVConvertor(JSONData, ReportTitle, ShowLabel) {
+    //If JSONData is not an object then JSON.parse will parse the JSON string in an Object
+    var arrData = typeof JSONData != 'object' ? JSON.parse(JSONData) : JSONData;
+    
+    var CSV = 'sep=,' + '\r\n\n';
+
+    //This condition will generate the Label/Header
+    if (ShowLabel) {
+        var row = "";
+        
+        //This loop will extract the label from 1st index of on array
+        for (var index in arrData[0]) {
+            
+            //Now convert each value to string and comma-seprated
+            row += index + ',';
+        }
+
+        row = row.slice(0, -1);
+        
+        //append Label row with line break
+        CSV += row + '\r\n';
+    }
+    
+    //1st loop is to extract each row
+    for (var i = 0; i < arrData.length; i++) {
+        var row = "";
+        
+        //2nd loop will extract each column and convert it in string comma-seprated
+        for (var index in arrData[i]) {
+            row += '"' + arrData[i][index] + '",';
+        }
+
+        row.slice(0, row.length - 1);
+        
+        //add a line break after each row
+        CSV += row + '\r\n';
+    }
+
+    if (CSV == '') {        
+        alert("Invalid data");
+        return;
+    }   
+    
+    //Generate a file name
+    var fileName = "MyReport_";
+    //this will remove the blank-spaces from the title and replace it with an underscore
+    fileName += ReportTitle.replace(/ /g,"_");   
+    
+    //Initialize file format you want csv or xls
+    var uri = 'data:text/csv;charset=utf-8,' + escape(CSV);
+    
+    // Now the little tricky part.
+    // you can use either>> window.open(uri);
+    // but this will not work in some browsers
+    // or you will not get the correct file extension    
+    
+    //this trick will generate a temp <a /> tag
+    var link = document.createElement("a");    
+    link.href = uri;
+    
+    //set the visibility hidden so it will not effect on your web-layout
+    link.style = "visibility:hidden";
+    link.download = fileName + ".csv";
+    
+    //this part will append the anchor tag and remove it after automatic click
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+}
+                  
+                };
+                reader.readAsArrayBuffer(f);
+            }
+        }
+
+      //Change event to dropdownlist
+      $(document).ready(function(){
+        $('#files').change(handleFile);
+      });
+    </script>
+
+    <div class="title">
+      Excel Parser
+    </div>
+    <input type="file" id="files" name="files"/>
+    <div class="instruction-block">
+      Insruction:
+      <ol>
+        <li>configure your EXCEL file with two columns: each must have integers</li>
+        <li>open this file</li>
+        <li>then you will receive new file with calculated data</li>
+      </ol>
+    </div>
+    
+	</body>
+</html>
