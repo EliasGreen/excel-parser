@@ -35,3 +35,8 @@ input {
   font-family: monospace;
   font-weight: bold;
 }
+
+img {
+  width: 60px;
+  border-radius: 10px;
+}
